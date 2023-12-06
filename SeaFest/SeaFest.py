@@ -6,12 +6,15 @@ import tensorflow as tf
 from shutil import copyfile
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+sys.setrecursionlimit(10000)
 
 root_path = ''
 source_path = os.path.join(root_path, 'Raw Data')
 classification_data_source_path = os.path.join(source_path, 'Classification')
 freshness_data_source_path = os.path.join(source_path, 'Freshness')
-clean_dataset = False
+clean_dataset = True
+SPLIT_SIZE = 0.7
 
 def labels_classification_directory_txt():
     # outputfile	= "classification_labels.txt"
@@ -62,48 +65,48 @@ def create_train_val_dir(root_path, classification_labels):
 
     datasets_dir = os.path.join(root_path, 'Datasets')
     
-    if clean_dataset==True:
+    if clean_dataset==True and os.path.exists(datasets_dir)==True :
         shutil.rmtree(datasets_dir)
 
     freshness_fish_dir = os.path.join(datasets_dir, 'Freshness')
 
     freshness_fresh_fish_dir = os.path.join(freshness_fish_dir, 'Fresh')
-    freshness_fresh_train_dir = os.path.join(freshness_fresh_fish_dir, 'Train')
-    freshness_fresh_val_dir = os.path.join(freshness_fresh_fish_dir, 'Val') 
+    freshness_fresh_train_dir = os.path.join(freshness_fresh_fish_dir, 'train')
+    freshness_fresh_val_dir = os.path.join(freshness_fresh_fish_dir, 'val') 
 
     freshness_non_fresh_fish_dir = os.path.join(freshness_fish_dir, 'Non Fresh')
-    freshness_non_fresh_train_dir = os.path.join(freshness_non_fresh_fish_dir, 'Train')
-    freshness_non_fresh_val_dir = os.path.join(freshness_non_fresh_fish_dir, 'Val')
+    freshness_non_fresh_train_dir = os.path.join(freshness_non_fresh_fish_dir, 'train')
+    freshness_non_fresh_val_dir = os.path.join(freshness_non_fresh_fish_dir, 'val')
 
     classification_dir = os.path.join(datasets_dir, 'Classification')
 
     for label in classification_labels:
         path =  os.path.join(classification_dir, label)
         classification_fish_paths[label.replace(' ', '_').lower() + '_dir'] = path
-    for key, value in classification_fish_paths.items():
-        print(f"{key}, {value}")
+    # for key, value in classification_fish_paths.items():
+    #     print(f"{key}, {value}")
 
     for key, value in classification_fish_paths.items():
-        path = os.path.join(value, 'Train')
+        path = os.path.join(value, 'train')
         classification_fish_train_paths[key.replace('_dir', '_train').lower() + '_dir'] = path
-    for key, value in classification_fish_train_paths.items():
-        print(f"{key}, {value}")
+    # for key, value in classification_fish_train_paths.items():
+    #     print(f"{key}, {value}")
 
     for key, value in classification_fish_paths.items():
         path = os.path.join(value, 'val')
         classification_fish_val_paths[key.replace('_dir', '_val').lower() + '_dir'] = path
-    for key, value in classification_fish_val_paths.items():
-        print(f"{key}, {value}")
+    # for key, value in classification_fish_val_paths.items():
+    #     print(f"{key}, {value}")
 
     for key, value in classification_fish_train_paths.items():
         classification_fish_train_paths[key] = value.replace('\\', '/')
-    for key, value in classification_fish_train_paths.items():
-        print(f"{key}, {value}")    
+    # for key, value in classification_fish_train_paths.items():
+    #     print(f"{key}, {value}")    
 
     for key, value in classification_fish_val_paths.items():
         classification_fish_val_paths[key] = value.replace('\\', '/')
-    for key, value in classification_fish_val_paths.items():
-        print(f"{key}, {value}")
+    # for key, value in classification_fish_val_paths.items():
+    #     print(f"{key}, {value}")
 
     if os.path.exists(datasets_dir):
         print("Directory already exist! using existing directory! SET 'clean_dataset=True' to remake the directories.")
@@ -143,39 +146,122 @@ def check_files(source):
         for dirname in dirnames:
             folders.append(os.path.relpath(os.path.join(root, dirname), source))
 
-
         for filename in filenames:
             files.append(os.path.relpath(os.path.join(root, filename), source))
 
 def shuffle_data(source_dir, train_dir, val_dir, split_size):
     files=[]
+    data_dict = {}
+    pathsep		= "\\"
+    classification_data = {}
+    try:
+        for path, dirs, files in os.walk(source_dir):
+            for file in files:
+                sep_file = os.path.join(path, file)
 
-    for filename in os.listdir(source_dir):
-        file_name = os.path.join(source_dir, filename)
-        if os.path.getsize(file_name) > 0:
-            files.append(filename)
-        else:
-            print(f"file has no weight {file_name}. IGNORING!")
+                if os.path.getsize(sep_file) > 0:
+                    key = path.split(pathsep)[len(path.split(pathsep))-1].lower().replace(' ', '_') + "_train_dir".lower()
+                # Check if the key already exists in the dictionary
+                    if key in classification_data:
+                        # If the key exists, append the file path to the existing list
+                        classification_data[key].append(sep_file)
+                    else:
+                        # If the key doesn't exist, initialize it as a list with the file path
+                        classification_data[key] = [sep_file]
 
-        train_set_size = int(len(files)*split_size)
-        shuffled_data = random.sample(files, len(files))
+                else:
+                    print(f"File has no weight: {file}. IGNORING!")
 
-        train_data = shuffled_data[0:train_set_size]
-        val_data = shuffled_data[train_set_size:len(files)]
+        # Now 'classification_data' contains directories as keys and lists of file paths as values
+        # print(classification_data)
 
-        for file in train_data:
-            src_file = os.path.join(source_dir, file)
-            des_file = os.path.join(train_dir, file)
-            copyfile(src_file, des_file)
-            print(f"filename : {file} successfully copied from {src_file} -> {des_file}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    
+    # for key, value in classification_data.items():
+    #     updated_file_paths = [file.replace('\\', '/') for file in value]
+    #     classification_data[key] = updated_file_paths
+    # print(classification_data)
+    # print(classification_fish_train_paths)
 
-        for file in val_data:
-            src_file = os.path.join(source_dir, file)
-            des_file = os.path.join(val_dir, file)
-            copyfile(src_file, des_file)
-            print(f"filename : {file} successfully copied from {src_file} -> {des_file}")
+    try:
+        for class_name, files_list in classification_data.items():
+            dest_dir = classification_fish_train_paths.get(class_name)
+
+            if dest_dir is not None:
+                # Create the destination directory if it doesn't exist
+                os.makedirs(dest_dir, exist_ok=True)
+
+                # Copy files from source directory to the destination directory
+                for file in files_list:
+                    filename = os.path.basename(file)
+                    dest_file = os.path.join(dest_dir, filename)
+                    copyfile(file, dest_file)
+                    print(f"Filename: {filename} copied from {file} to {dest_file}")
+            else:
+                print(f"No destination path found for class: {class_name}. Skipping copying.")
+
+    except Exception as e:
+        print(f"An error occurred during file copying: {e}")
+
+    # print(classification_fish_train_paths)
+
+    # keys_list = list(classification_data.keys())
+    # random.shuffle(keys_list)
+
+    # train_set_size = int(len(classification_data)*SPLIT_SIZE)
+
+    # train_keys = keys_list[:train_set_size]
+    # val_keys = keys_list[train_set_size:]
+
+    # train_data = {key: classification_data[key] for key in train_keys}
+    # val_data = {key: classification_data[key] for key in val_keys}
+
+    # # print("Training data keys:", train_data.keys())
+    # # print("Validation data keys:", val_data.keys())
+
+    # for (src_key, src_value), (des_key, des_value) in zip(train_data.items(), classification_fish_train_paths.items()):
+    #     src_value = train_data[src_key]
+    #     des_value = classification_fish_train_paths.get(src_key)
+    # if des_value is not None:
+    #     for file in src_value:
+    #         filename = os.path.basename(file)
+    #         des_file = os.path.join(des_key, filename)
+    #         copyfile(file, des_file)
+    #         print(f"Filename: {filename} successfully copied from {file} to {des_file}")
+    # else:
+    #     print(f"No destination path found for key: {src_key}. Skipping copying operation.")
+    # for subdirectories in os.listdir(source_dir):
+    #     subdirectories_path = os.path.join(source_dir, subdirectories)
+
+    #     for filename in os.listdir(subdirectories_path):
+    #         file_name = os.path.join(subdirectories_path, filename)
+
+    #         if os.path.getsize(file_name) > 0:
+    #             files.append(filename)
+    #             data_dict[filename] = file_name
+    #         else:
+    #             print(f"file has no weight {file_name}. IGNORING!")
+
+    #     train_set_size = int(len(files)*split_size)
+    #     shuffled_data = random.sample(files, len(files))
+
+    #     train_data = shuffled_data[0:train_set_size]
+    #     val_data = shuffled_data[train_set_size:len(files)]
+
+    #     for file in train_data:
+    #         src_file = os.path.join(subdirectories_path, file)
+    #         des_file = os.path.join(train_dir, file)
+    #         copyfile(src_file, des_file)
+    #         print(f"filename : {file} successfully copied from {src_file} -> {des_file}")
+
+    #     for file in val_data:
+    #         src_file = os.path.join(source_dir, file)
+    #         des_file = os.path.join(val_dir, file)
+    #         copyfile(src_file, des_file)
+    #         print(f"filename : {file} successfully copied from {src_file} -> {des_file}")
         
-        pass
+    #     pass
 
 def train_val_generator(train_dir, val_dir):
     train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
@@ -215,6 +301,8 @@ def create_model():
 
 classification_labels = labels_classification_directory_txt()
 classification_fish_train_paths, classification_fish_val_paths, freshness_fresh_train_dir, freshness_fresh_val_dir, freshness_non_fresh_train_dir, freshness_non_fresh_val_dir = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
+
+shuffle_data(classification_data_source_path, classification_fish_train_paths, classification_fish_val_paths, SPLIT_SIZE)
 
 # check_files(classification_data_source_path) #optional
 
