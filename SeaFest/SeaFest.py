@@ -13,7 +13,7 @@ root_path = ''
 source_path = os.path.join(root_path, 'Raw Data')
 classification_data_source_path = os.path.join(source_path, 'Classification')
 freshness_data_source_path = os.path.join(source_path, 'Freshness')
-clean_dataset = True
+clean_dataset = False
 SPLIT_SIZE = 0.7
 
 def labels_classification_directory_txt():
@@ -228,31 +228,14 @@ def train_val_generator(train_dir, val_dir):
  
     species_train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
                                     rotation_range=40,
-                                    width_shift_range=50,
-                                    height_shift_range=50,
-                                    shear_range=0.2,
+                                    # width_shift_range=50,
+                                    # height_shift_range=50,
+                                    # shear_range=0.2,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
     
     species_val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
     
-    # for species in classification_labels:
-    #     species_train_generator = species_train_datagen.flow_from_directory(
-    #         directory=os.path.join(classification_dataset_dir, species, 'training'),
-    #         target_size=(150,150),
-    #         batch_size=32,
-    #         class_mode='categorical',
-    #         subset='training',
-    #         # classes=classification_labels,
-    #         shuffle=True
-    #     )
-
-    #     species_val_generator = species_val_datagen.flow_from_directory(directory=os.path.join(classification_dataset_dir, species, 'validation'),
-    #                                                 batch_size=10,
-    #                                                 class_mode='categorical',
-    #                                                 subset='validation',
-    #                                                 target_size=(150, 150))
-
     species_train_generators = species_train_datagen.flow_from_directory(
         directory=train_dir,
         target_size=(150,150),
@@ -262,49 +245,67 @@ def train_val_generator(train_dir, val_dir):
 
     species_val_generators= species_val_datagen.flow_from_directory(
         directory=val_dir,
-        batch_size=10,
+        batch_size=16,
         class_mode='categorical',
         target_size=(150, 150)
     )
 
     return species_train_generators, species_val_generators
 
+def plot_training(history):
+    # Plot training & validation loss values
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('Model Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Validation'], loc='upper left')
+    plt.show()
+
+    # Plot training & validation accuracy values
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('Model Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Validation'], loc='upper left')
+    plt.show()
+
 def create_model():
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Conv2D(64, (3,3), activation='relu', input_shape=(125,125,3)),
+        tf.keras.layers.Conv2D(8, (3,3), activation='relu', input_shape=(150,150,3)),
         tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.Conv2D(12, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
+        tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.Conv2D(22, (3,3), activation='relu'),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(16, activation='relu'),
         tf.keras.layers.Dense(32, activation='relu'),
-        tf.keras.layers.Dense(1, activation='sigmoid')
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(48, activation='softmax')
     ])
 
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 
 classification_labels = labels_classification_directory_txt()
 classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths, freshness_fresh_training_dir, freshness_fresh_validation_dir, freshness_nonfresh_validation_dir, freshness_nonfresh_training_dir = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
-copy_split_shuffle_data(classification_data_source_path, classification_training_fish_paths, classification_validation_fish_paths, SPLIT_SIZE)
-train_generator, val_generator = train_val_generator(classification_training_dir, classification_validation_dir) #generate data
+if clean_dataset== True:
+    copy_split_shuffle_data(classification_data_source_path, classification_training_fish_paths, classification_validation_fish_paths, SPLIT_SIZE)
+species_train_generators, species_val_generators = train_val_generator(classification_training_dir, classification_validation_dir) #generate data
+model = create_model()
+history = model.fit(species_train_generators, epochs=20, verbose=1, validation_data=species_val_generators)
+plot_training(history)
+model.save('SeaFest')
 sys.exit()
 
+
 # check_files(classification_data_source_path) #optional
-
-# for rootdir, dirs, files in os.walk(root_path): #check subdirectories?
-#     for subdir in dirs:
-#         print(os.path.join(root_path, subdir))
-
-# shuffle_data(fresh_path_source, train_fresh_dir, val_fresh_dir, .8) #shuffle data dari data ke dataset training
-# shuffle_data(non_fresh_path_source, train_non_fresh_dir, val_non_fresh_dir, .8) #shuffle data dari data ke datasset validasi
- 
-
-# print(f"jumlah foto ikan segar = {len(os.listdir(source_path_fresh))}")
-# print(f"jumlah foto ikan non segar = {len(os.listdir(source_path_fresh))}")
-
-# model = create_model()
-# history = model.fit(train_generator, epochs=100, verbose=1, validation_data=val_generator)
-# model.save('Capstone_test_1/saved_model.h5')
 # loaded_model = tf.keras.models.load_model('Capstone_test_1/saved_model.h5')
 
 def PREDICT(model, image_path):
