@@ -131,7 +131,7 @@ def create_train_val_dir(root_path, classification_labels):
         print("Train and Val Directory has been created!")
         pass
     
-    return classification_training_fish_paths, classification_validation_fish_paths, freshness_fresh_training_dir, freshness_fresh_validation_dir, freshness_nonfresh_validation_dir, freshness_nonfresh_training_dir
+    return classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths, freshness_fresh_training_dir, freshness_fresh_validation_dir, freshness_nonfresh_validation_dir, freshness_nonfresh_training_dir
 
 def check_files(source):
     folders = []
@@ -147,7 +147,7 @@ def check_files(source):
         for filename in filenames:
             files.append(os.path.relpath(os.path.join(root, filename), source))
 
-def copy_shuffle_data(source_dir,  classification_training_fish_paths, classification_validation_fish_paths, split_size):
+def copy_split_shuffle_data(source_dir,  classification_training_fish_paths, classification_validation_fish_paths, split_size):
     files=[]
     data_dict = {}
     pathsep		= "\\"
@@ -225,26 +225,49 @@ def copy_shuffle_data(source_dir,  classification_training_fish_paths, classific
         print(f"An error occurred during file copying: {e}")
 
 def train_val_generator(train_dir, val_dir):
-    train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
-                                       rotation_range=40,
-                                       width_shift_range=50,
-                                       height_shift_range=50,
-                                       shear_range=0.2,
-                                       horizontal_flip=True,
-                                       fill_mode='nearest')
+ 
+    species_train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
+                                    rotation_range=40,
+                                    width_shift_range=50,
+                                    height_shift_range=50,
+                                    shear_range=0.2,
+                                    horizontal_flip=True,
+                                    fill_mode='nearest')
     
-    train_generator = train_datagen.flow_from_directory(directory=train_dir,
-                                                        batch_size=10,
-                                                        class_mode='binary',
-                                                        target_size=(125, 125))
+    species_val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
     
-    val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
+    # for species in classification_labels:
+    #     species_train_generator = species_train_datagen.flow_from_directory(
+    #         directory=os.path.join(classification_dataset_dir, species, 'training'),
+    #         target_size=(150,150),
+    #         batch_size=32,
+    #         class_mode='categorical',
+    #         subset='training',
+    #         # classes=classification_labels,
+    #         shuffle=True
+    #     )
 
-    val_generator = train_datagen.flow_from_directory(directory=val_dir,
-                                                        batch_size=10,
-                                                        class_mode='binary',
-                                                        target_size=(125, 125))
-    return train_generator, val_generator
+    #     species_val_generator = species_val_datagen.flow_from_directory(directory=os.path.join(classification_dataset_dir, species, 'validation'),
+    #                                                 batch_size=10,
+    #                                                 class_mode='categorical',
+    #                                                 subset='validation',
+    #                                                 target_size=(150, 150))
+
+    species_train_generators = species_train_datagen.flow_from_directory(
+        directory=train_dir,
+        target_size=(150,150),
+        batch_size=32,
+        class_mode='categorical',
+    )
+
+    species_val_generators= species_val_datagen.flow_from_directory(
+        directory=val_dir,
+        batch_size=10,
+        class_mode='categorical',
+        target_size=(150, 150)
+    )
+
+    return species_train_generators, species_val_generators
 
 def create_model():
     model = tf.keras.models.Sequential([
@@ -261,8 +284,9 @@ def create_model():
     return model
 
 classification_labels = labels_classification_directory_txt()
-classification_training_fish_paths, classification_validation_fish_paths, freshness_fresh_training_dir, freshness_fresh_validation_dir, freshness_nonfresh_validation_dir, freshness_nonfresh_training_dir = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
-copy_shuffle_data(classification_data_source_path, classification_training_fish_paths, classification_validation_fish_paths, SPLIT_SIZE)
+classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths, freshness_fresh_training_dir, freshness_fresh_validation_dir, freshness_nonfresh_validation_dir, freshness_nonfresh_training_dir = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
+copy_split_shuffle_data(classification_data_source_path, classification_training_fish_paths, classification_validation_fish_paths, SPLIT_SIZE)
+train_generator, val_generator = train_val_generator(classification_training_dir, classification_validation_dir) #generate data
 sys.exit()
 
 # check_files(classification_data_source_path) #optional
@@ -274,7 +298,6 @@ sys.exit()
 # shuffle_data(fresh_path_source, train_fresh_dir, val_fresh_dir, .8) #shuffle data dari data ke dataset training
 # shuffle_data(non_fresh_path_source, train_non_fresh_dir, val_non_fresh_dir, .8) #shuffle data dari data ke datasset validasi
  
-# train_generator, val_generator = train_val_generator(train_dir, val_dir) #generate data
 
 # print(f"jumlah foto ikan segar = {len(os.listdir(source_path_fresh))}")
 # print(f"jumlah foto ikan non segar = {len(os.listdir(source_path_fresh))}")
