@@ -154,6 +154,7 @@ def shuffle_data(source_dir, train_dir, val_dir, split_size):
     data_dict = {}
     pathsep		= "\\"
     classification_data = {}
+
     try:
         for path, dirs, files in os.walk(source_dir):
             for file in files:
@@ -177,33 +178,78 @@ def shuffle_data(source_dir, train_dir, val_dir, split_size):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-    
-    # for key, value in classification_data.items():
-    #     updated_file_paths = [file.replace('\\', '/') for file in value]
-    #     classification_data[key] = updated_file_paths
-    # print(classification_data)
-    # print(classification_fish_train_paths)
+        
+    for key, value in classification_data.items():
+        updated_file_paths = [file.replace('\\', '/') for file in value]
+        classification_data[key] = updated_file_paths
 
+    for key in classification_data:
+        random.shuffle(classification_data[key])
+
+    # print("Items in classification_fish_train_paths:", classification_fish_train_paths.items())
+    # print("Items in classification_fish_val_paths:", classification_fish_train_paths.items())
+    # print("Items in classification_data:", classification_data.items())
+
+    # try:
+    #     for class_name, files_list in classification_data.items():
+    #         dest_dir = classification_fish_train_paths.get(class_name)
+
+    #         if dest_dir is not None:
+    #             # Create the destination directory if it doesn't exist
+    #             os.makedirs(dest_dir, exist_ok=True)
+
+    #             # Copy files from source directory to the destination directory
+    #             for file in files_list:
+    #                 filename = os.path.basename(file)
+    #                 dest_file = os.path.join(dest_dir, filename)
+    #                 copyfile(file, dest_file)
+    #                 print(f"Filename: {filename} copied from {file} to {dest_file}")
+    #         else:
+    #             print(f"No destination path found for class: {class_name}. Skipping copying.")
+
+    # except Exception as e:
+    #     print(f"An error occurred during file copying: {e}")
+    train_path = {}
+    val_path = {}
     try:
-        for class_name, files_list in classification_data.items():
-            dest_dir = classification_fish_train_paths.get(class_name)
+        for files_list, train_path, val_path in zip (classification_data.values(), classification_fish_train_paths.values(), classification_fish_val_paths.values()):
+            print(files_list)
+            print(train_path)
+            print(val_path)
 
-            if dest_dir is not None:
-                # Create the destination directory if it doesn't exist
-                os.makedirs(dest_dir, exist_ok=True)
+            if train_path is not None and val_path is not None:
 
-                # Copy files from source directory to the destination directory
-                for file in files_list:
+                # Randomly shuffle the files list
+                random.shuffle(files_list)
+
+                # Calculate split point for 80/20 split
+                split_point = int(len(files_list) * 0.8)
+
+                # Split files into train and validation sets
+                train_files = files_list[:split_point]
+                val_files = files_list[split_point:]
+
+                # Copy files to the train folder
+                for file in train_files:
                     filename = os.path.basename(file)
-                    dest_file = os.path.join(dest_dir, filename)
-                    copyfile(file, dest_file)
-                    print(f"Filename: {filename} copied from {file} to {dest_file}")
+                    dest_file = os.path.join(train_path, filename)
+                    shutil.copyfile(file, dest_file)
+                    print(f"Filename: {filename} copied from {file} to {dest_file} (Train)")
+
+                # Copy files to the validation folder
+                for file in val_files:
+                    filename = os.path.basename(file)
+                    dest_file = os.path.join(val_path, filename)
+                    shutil.copyfile(file, dest_file)
+                    print(f"Filename: {filename} copied from {file} to {dest_file} (Validation)")
+
             else:
-                print(f"No destination path found for class: {class_name}. Skipping copying.")
+                print(f"No destination path found for class: . Skipping copying.")
 
     except Exception as e:
         print(f"An error occurred during file copying: {e}")
 
+ ###########################
     # print(classification_fish_train_paths)
 
     # keys_list = list(classification_data.keys())
