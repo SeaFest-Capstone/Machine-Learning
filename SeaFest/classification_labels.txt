@@ -1,42 +1,48 @@
-Raw Data/Classification
-Bangus
-Big Head Carp
-Black Sea Sprat
-Black Spotted Barb
-Catfish
-Climbing Perch
-Fourfinger Threadfin
-Freshwater Eel
+Balusu (Tenpounder - Ikan Pisang)
+Bandeng
+Belanak (Mullet)
+Belanak Merah (Ikan Jenggot)
+Belut Air Tawar
+Betok-Puyu (Climbing Perch)
+Black Spotted Barb -1
+Bulan Bulan
+Buntal Bintik Hijau
+Gabus
 Gilt Head Bream
 Glass Perchlet
 Goby
-Gold Fish
-Gourami
 Grass Carp
-Green Spotted Puffer
+Gurame
+Gurame Kepala Besar
+Hiu Tikus 1
+Hiu Tikus 2
 Horse Mackerel
-Hourse Mackerel
+Ikan Jenggot
+Ikan Lumpur (Mudfish)
+Ikan Mas
+Ikan Mola
+Ikan Nyamuk Barat ( Gambusia Affinis )
 Indian Carp
-Indo-Pacific Tarpon
-Jaguar Gapote
-Janitor Fish
+Jaguar Guapote
+Kakap Merah
+Kakap Putih (Sea Bass)
+Kerapu
 Knifefish
+Lele
 Long-Snouted Pipefish
-Mosquito Fish
-Mudfish
-Mullet
-Pangasius
+Longtail Tuna 22
+Patin
 Perch
-Red Mullet
 Red Sea Bream
-Scat Fish
-Sea Bass
-Shrimp
-Silver Barb
-Silver Carp
+Sapu-sapu
+Scat Fish (Ikan Argus-Kiper)
+Senangin
 Silver Perch
-Snakehead
-Striped Red Mullet
-Tenpounder
+Sprat Laut Hitam
+Tawes
+Tenggiri (Spanish Mackerel)
 Tilapia
+Tongkol 3
+Tongkol Abu-abu (Longtail Tuna)
 Trout
+Udang

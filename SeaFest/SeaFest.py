@@ -17,7 +17,7 @@ clean_dataset = False
 SPLIT_SIZE = 0.7
 
 def labels_classification_directory_txt():
-    # outputfile	= "classification_labels.txt"
+    outputfile	= "classification_labels.txt"
     folder		= "Raw Data/Classification"	
     pathsep		= "\\"
     classification_labels = []
@@ -37,26 +37,26 @@ def labels_classification_directory_txt():
     #     pass
 
     classification_labels.pop(0)
+
+    #SAVE TO TXT
+    try: 
+        with open(outputfile, "x") as txtfile:		
+            for path,dirs,files in os.walk(folder):
+                sep = path.split(pathsep)[len(path.split(pathsep))-1]
+                print(sep)
+                txtfile.write("%s\n" % sep)
+        txtfile.close()
+
+    except FileExistsError:
+        os.remove(outputfile)
+        with open(outputfile, "x") as txtfile:	
+            for path,dirs,files in os.walk(folder):
+                sep = path.split(pathsep)[len(path.split(pathsep))-1]
+                print(sep)
+                txtfile.write("%s\n" % sep)
+        txtfile.close()
+        pass   
     return classification_labels
-
-    # SAVE TO TXT
-    # try: 
-    #     with open(outputfile, "x") as txtfile:		
-    #         for path,dirs,files in os.walk(folder):
-    #             sep = path.split(pathsep)[len(path.split(pathsep))-1]
-    #             print(sep)
-    #             txtfile.write("%s\n" % sep)
-    #     txtfile.close()
-
-    # except FileExistsError:
-    #     os.remove(outputfile)
-    #     with open(outputfile, "x") as txtfile:	
-    #         for path,dirs,files in os.walk(folder):
-    #             sep = path.split(pathsep)[len(path.split(pathsep))-1]
-    #             print(sep)
-    #             txtfile.write("%s\n" % sep)
-    #     txtfile.close()
-    #     pass   
 
 def create_train_val_dir(root_path, classification_labels):
     classification_training_fish_paths = {}
@@ -294,6 +294,8 @@ def create_model():
     return model
 
 classification_labels = labels_classification_directory_txt()
+sys.exit()
+
 classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths, freshness_fresh_training_dir, freshness_fresh_validation_dir, freshness_nonfresh_validation_dir, freshness_nonfresh_training_dir = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
 if clean_dataset== True:
     copy_split_shuffle_data(classification_data_source_path, classification_training_fish_paths, classification_validation_fish_paths, SPLIT_SIZE)
@@ -302,7 +304,7 @@ model = create_model()
 history = model.fit(species_train_generators, epochs=20, verbose=1, validation_data=species_val_generators)
 plot_training(history)
 model.save('SeaFest')
-sys.exit()
+
 
 
 # check_files(classification_data_source_path) #optional
