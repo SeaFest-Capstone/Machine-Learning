@@ -228,9 +228,9 @@ def train_val_generator(train_dir, val_dir):
  
     species_train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
                                     rotation_range=40,
-                                    # width_shift_range=50,
-                                    # height_shift_range=50,
-                                    # shear_range=0.2,
+                                    width_shift_range=50,
+                                    height_shift_range=50,
+                                    shear_range=0.2,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
     
@@ -239,18 +239,24 @@ def train_val_generator(train_dir, val_dir):
     species_train_generators = species_train_datagen.flow_from_directory(
         directory=train_dir,
         target_size=(150,150),
-        batch_size=32,
+        batch_size=64,
         class_mode='categorical',
     )
 
     species_val_generators= species_val_datagen.flow_from_directory(
         directory=val_dir,
-        batch_size=16,
+        batch_size=20,
         class_mode='categorical',
         target_size=(150, 150)
     )
 
     return species_train_generators, species_val_generators
+
+def scheduler(epoch, lr):
+  if epoch < 10:
+    return lr
+  else:
+    return lr * tf.math.exp(-0.1)
 
 def plot_training(history):
     # Plot training & validation loss values
@@ -273,38 +279,48 @@ def plot_training(history):
 
 def create_model():
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Conv2D(8, (3,3), activation='relu', input_shape=(150,150,3)),
+        tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(150,150,3)),
         tf.keras.layers.MaxPooling2D(2,2),
-        tf.keras.layers.Conv2D(12, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
         tf.keras.layers.MaxPooling2D(2,2),
-        tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
-        tf.keras.layers.MaxPooling2D(2,2),
-        tf.keras.layers.Conv2D(22, (3,3), activation='relu'),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
+        tf.keras.layers.GlobalAveragePooling2D(),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(16, activation='relu'),
         tf.keras.layers.Dense(32, activation='relu'),
         tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(256, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu'),
         tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(48, activation='softmax')
+        tf.keras.layers.Dense(9, activation='softmax')
     ])
 
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 
 classification_labels = labels_classification_directory_txt()
-sys.exit()
+
 
 classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths, freshness_fresh_training_dir, freshness_fresh_validation_dir, freshness_nonfresh_validation_dir, freshness_nonfresh_training_dir = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
+
 if clean_dataset== True:
     copy_split_shuffle_data(classification_data_source_path, classification_training_fish_paths, classification_validation_fish_paths, SPLIT_SIZE)
 species_train_generators, species_val_generators = train_val_generator(classification_training_dir, classification_validation_dir) #generate data
+
+
+lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+
 model = create_model()
-history = model.fit(species_train_generators, epochs=20, verbose=1, validation_data=species_val_generators)
+initial_weights = model.get_weights()
+model.set_weights(initial_weights)
+history = model.fit(species_train_generators, epochs=100, verbose=1, validation_data=species_val_generators)
 plot_training(history)
 model.save('SeaFest')
-
+sys.exit()
 
 
 # check_files(classification_data_source_path) #optional

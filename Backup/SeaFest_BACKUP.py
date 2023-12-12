@@ -17,7 +17,7 @@ clean_dataset = True
 SPLIT_SIZE = 0.7
 
 def labels_classification_directory_txt():
-    # outputfile	= "classification_labels.txt"
+    outputfile	= "classification_labels.txt"
     folder		= "Raw Data/Classification"	
     pathsep		= "\\"
     classification_labels = []
@@ -30,33 +30,30 @@ def labels_classification_directory_txt():
 
     except IndexError:
         pass
-    #     for path,dirs,files in os.walk(folder):
-    #         sep = path.split(pathsep)[len(path.split(pathsep))-1]
-    #         print(sep)
-    #         classification_labels.append(sep)
-    #     pass
+
 
     classification_labels.pop(0)
-    return classification_labels
 
     # SAVE TO TXT
-    # try: 
-    #     with open(outputfile, "x") as txtfile:		
-    #         for path,dirs,files in os.walk(folder):
-    #             sep = path.split(pathsep)[len(path.split(pathsep))-1]
-    #             print(sep)
-    #             txtfile.write("%s\n" % sep)
-    #     txtfile.close()
+    try: 
+        with open(outputfile, "x") as txtfile:		
+            for path,dirs,files in os.walk(folder):
+                sep = path.split(pathsep)[len(path.split(pathsep))-1]
+                print(sep)
+                txtfile.write("%s\n" % sep)
+        txtfile.close()
 
-    # except FileExistsError:
-    #     os.remove(outputfile)
-    #     with open(outputfile, "x") as txtfile:	
-    #         for path,dirs,files in os.walk(folder):
-    #             sep = path.split(pathsep)[len(path.split(pathsep))-1]
-    #             print(sep)
-    #             txtfile.write("%s\n" % sep)
-    #     txtfile.close()
-    #     pass   
+    except FileExistsError:
+        os.remove(outputfile)
+        with open(outputfile, "x") as txtfile:	
+            for path,dirs,files in os.walk(folder):
+                sep = path.split(pathsep)[len(path.split(pathsep))-1]
+                print(sep)
+                txtfile.write("%s\n" % sep)
+
+        txtfile.close()
+        pass   
+    return classification_labels
 
 def create_train_val_dir(root_path, classification_labels):
     classification_fish_paths = {}
@@ -83,30 +80,20 @@ def create_train_val_dir(root_path, classification_labels):
     for label in classification_labels:
         path =  os.path.join(classification_dir, label)
         classification_fish_paths[label.replace(' ', '_').lower() + '_dir'] = path
-    # for key, value in classification_fish_paths.items():
-    #     print(f"{key}, {value}")
 
     for key, value in classification_fish_paths.items():
         path = os.path.join(value, 'train')
         classification_fish_train_paths[key.replace('_dir', '_train').lower() + '_dir'] = path
-    # for key, value in classification_fish_train_paths.items():
-    #     print(f"{key}, {value}")
 
     for key, value in classification_fish_paths.items():
         path = os.path.join(value, 'val')
         classification_fish_val_paths[key.replace('_dir', '_val').lower() + '_dir'] = path
-    # for key, value in classification_fish_val_paths.items():
-    #     print(f"{key}, {value}")
 
     for key, value in classification_fish_train_paths.items():
-        classification_fish_train_paths[key] = value.replace('\\', '/')
-    # for key, value in classification_fish_train_paths.items():
-    #     print(f"{key}, {value}")    
+        classification_fish_train_paths[key] = value.replace('\\', '/')  
 
     for key, value in classification_fish_val_paths.items():
         classification_fish_val_paths[key] = value.replace('\\', '/')
-    # for key, value in classification_fish_val_paths.items():
-    #     print(f"{key}, {value}")
 
     if os.path.exists(datasets_dir):
         print("Directory already exist! using existing directory! SET 'clean_dataset=True' to remake the directories.")
