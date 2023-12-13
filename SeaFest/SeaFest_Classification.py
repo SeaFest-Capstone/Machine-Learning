@@ -12,7 +12,6 @@ sys.setrecursionlimit(10000)
 root_path = ''
 source_path = os.path.join(root_path, 'Raw Data')
 classification_data_source_path = os.path.join(source_path, 'Classification')
-freshness_data_source_path = os.path.join(source_path, 'Freshness')
 clean_dataset = True
 SPLIT_SIZE = 0.7
 
@@ -30,11 +29,6 @@ def labels_classification_directory_txt():
 
     except IndexError:
         pass
-    #     for path,dirs,files in os.walk(folder):
-    #         sep = path.split(pathsep)[len(path.split(pathsep))-1]
-    #         print(sep)
-    #         classification_labels.append(sep)
-    #     pass
 
     classification_labels.pop(0)
 
@@ -61,27 +55,11 @@ def labels_classification_directory_txt():
 def create_train_val_dir(root_path, classification_labels):
     classification_training_fish_paths = {}
     classification_validation_fish_paths = {}
-    freshness_training_fish_paths = {}
-    freshness_validation_fish_paths = {}
 
     datasets_dir = os.path.join(root_path, 'Datasets')
     
     if clean_dataset==True and os.path.exists(datasets_dir)==True :
         shutil.rmtree(datasets_dir)
-
-    freshness_dir = os.path.join(datasets_dir, 'Freshness')
-
-    freshness_fresh_training_dir = os.path.join(freshness_dir, 'training', 'fresh')
-    freshness_fresh_validation_dir = os.path.join(freshness_dir, 'validation', 'fresh')
-    
-    freshness_nonfresh_training_dir = os.path.join(freshness_dir, 'training', 'non fresh')
-    freshness_nonfresh_validation_dir = os.path.join(freshness_dir, 'validation', 'non fresh')
-
-    freshness_training_fish_paths['training_fresh_dir'] = freshness_fresh_training_dir
-    freshness_training_fish_paths['training_nonfresh_dir'] = freshness_nonfresh_training_dir
-    freshness_validation_fish_paths['validation_fresh_dir'] = freshness_fresh_validation_dir
-    freshness_validation_fish_paths['validation_nonfresh_dir'] = freshness_nonfresh_validation_dir
-
 
     classification_dir = os.path.join(datasets_dir, 'Classification')
 
@@ -112,16 +90,10 @@ def create_train_val_dir(root_path, classification_labels):
     print(classification_training_fish_paths)
     print(classification_validation_fish_paths)
 
-    
-
     if os.path.exists(datasets_dir):
         print("Directory already exist! using existing directory! SET 'clean_dataset=True' to remake the directories.")
         pass
     else:
-        os.makedirs(freshness_fresh_training_dir)
-        os.makedirs(freshness_fresh_validation_dir)
-        os.makedirs(freshness_nonfresh_training_dir)
-        os.makedirs(freshness_nonfresh_validation_dir)
 
         for key, value in classification_training_fish_paths.items():
             try :
@@ -139,13 +111,12 @@ def create_train_val_dir(root_path, classification_labels):
         print("Train and Val Directory has been created!")
         pass
     
-    return classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths, freshness_dir, freshness_training_fish_paths, freshness_validation_fish_paths
+    return classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths
 
 def check_files(source):
     folders = []
     files = []
 
-    # Get list of all items (folders, files, etc.) in the directory
     items = os.listdir(source)
 
     for root, dirnames, filenames in os.walk(source):
@@ -222,70 +193,6 @@ def copy_split_shuffle_data(source_dir,  classification_training_fish_paths, cla
                     dest_file = os.path.join(val_path, filename)
                     shutil.copyfile(file, dest_file)
                     print(f"Filename: {filename} copied from {file} to {dest_file} (Validation)")
-
-            else:
-                print(f"No destination path found for class: . Skipping copying.")
-
-    except Exception as e:
-        print(f"An error occurred during file copying: {e}")
-
-    files.clear()
-    
-    freshness_data = {}
-
-    try:
-        for path, dirs, files in os.walk(freshness_data_source_path):
-            for file in files:
-                sep_file = os.path.join(path, file)
-
-                if os.path.getsize(sep_file) > 0:
-                    key = path.split(pathsep)[len(path.split(pathsep))-1].lower().replace(' ', '_') + "_train_dir".lower()
-                    if key in freshness_data:
-                        freshness_data[key].append(sep_file)
-                    else:
-                        freshness_data[key] = [sep_file]
-                else:
-                    print(f"File has no weight: {file}. IGNORING!")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    # print([list_values[0] for list_values in freshness_data.values()])
-    print(type(files_list), type(train_path), type(val_path))
-    files_list.clear()
-    # train_path.clear()
-    # val_path.clear()
-
-    try:
-        for files_list, train_path, val_path in zip (freshness_data.values(), freshness_training_fish_paths.values(), freshness_validation_fish_paths.values()):
-            print(files_list)
-            print(train_path)
-            print(val_path)
-
-            if train_path is not None and val_path is not None:
-
-                # Randomly shuffle the files list
-                random.shuffle(files_list)
-
-                # Calculate split point for SPLIT_SIZE
-                split_point = int(len(files_list) * split_size)
-
-                # Split files into train and validation sets
-                train_files = files_list[:split_point]
-                val_files = files_list[split_point:]
-
-                # Copy files to the train folder
-                for file in train_files:
-                    filename = os.path.basename(file)
-                    dest_file = os.path.join(train_path, filename)
-                    shutil.copyfile(file, dest_file)
-                    print(f"Filename: {filename} copied from {file} to {dest_file} (Train)")
-
-                # Copy files to the validation folder
-                for file in val_files:
-                    filename = os.path.basename(file)
-                    dest_file = os.path.join(val_path, filename)
-                    shutil.copyfile(file, dest_file)
-                    print(f"FRESH ! Filename: {filename} copied from {file} to {dest_file} (Validation)")
 
             else:
                 print(f"No destination path found for class: . Skipping copying.")
@@ -373,17 +280,12 @@ def create_model():
 
 classification_labels = labels_classification_directory_txt()
 
-classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths, freshness_dir, freshness_training_fish_paths, freshness_validation_fish_paths = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
-
-print(freshness_dir, freshness_training_fish_paths, freshness_validation_fish_paths)
-
+classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
 
 if clean_dataset== True:
     copy_split_shuffle_data(classification_data_source_path, classification_training_fish_paths, classification_validation_fish_paths, SPLIT_SIZE)
 
-sys.exit()
 species_train_generators, species_val_generators = train_val_generator(classification_training_dir, classification_validation_dir) #generate data
-
 
 lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
