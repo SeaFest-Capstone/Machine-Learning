@@ -175,7 +175,9 @@ def create_model():
     model = tf.keras.models.Sequential([
         tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(150,150,3)),
         tf.keras.layers.MaxPooling2D(2,2),
-        tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+        tf.keras.layers.Conv2D(64, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.Conv2D(128, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
         tf.keras.layers.MaxPooling2D(2,2),
         tf.keras.layers.BatchNormalization(),
         tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
@@ -208,7 +210,7 @@ lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 model = create_model()
 initial_weights = model.get_weights()
 model.set_weights(initial_weights)
-history = model.fit(train_generators, epochs=40, verbose=1, validation_data=val_generators)
+history = model.fit(train_generators, epochs=300, verbose=1, validation_data=val_generators, callbacks=[lrs_callback])
 plot_training(history)
 model.save('SeaFest Freshness')
 
