@@ -1,5 +1,4 @@
 import os
-import zipfile
 import random
 import shutil
 import tensorflow as tf
@@ -304,7 +303,7 @@ model = build_model()
 initial_weights = model.get_weights()
 model.set_weights(initial_weights)
 
-history = model.fit(species_train_generators, epochs=120, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback])
+history = model.fit(species_train_generators, epochs=2, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback])
 plot_training(history)
 model.save('SeaFest_SavedModels/SeaFest_Classification_SavedModels')
 sys.exit()
