@@ -7,25 +7,13 @@ from shutil import copyfile
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-import requests
 sys.setrecursionlimit(10000)
 
 root_path = ''
 source_path = os.path.join(root_path, 'Raw Data')
 classification_data_source_path = os.path.join(source_path, 'Classification')
-clean_dataset = False
+clean_dataset = True
 SPLIT_SIZE = 0.7
-
-def get_models():
-    url = "https://storage.googleapis.com/tensorflow/keras-applications/inception_resnet_v2/inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5"
-    output_path = "inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5"
-
-# Send an HTTP request to the URL and download the file
-    response = requests.get(url)
-
-# Save the downloaded content to a file
-    with open(output_path, 'wb') as f:
-        f.write(response.content)
 
 def labels_classification_directory_txt():
     outputfile	= "classification_labels.txt"
@@ -41,7 +29,6 @@ def labels_classification_directory_txt():
 
     except IndexError:
         pass
-    print
 
     classification_labels.pop(0)
 
@@ -227,7 +214,7 @@ def train_val_generator(train_dir, val_dir):
     
     species_train_generators = species_train_datagen.flow_from_directory(
         directory=train_dir,
-        target_size=(250,250),
+        target_size=(150,150),
         batch_size=64,
         class_mode='categorical',
     )
@@ -236,7 +223,7 @@ def train_val_generator(train_dir, val_dir):
         directory=val_dir,
         batch_size=20,
         class_mode='categorical',
-        target_size=(250, 250)
+        target_size=(150, 150)
     )
 
     return species_train_generators, species_val_generators
@@ -266,29 +253,31 @@ def plot_training(history):
     plt.legend(['Train', 'Validation'], loc='upper left')
     plt.show()
 
-def build_model():
-    local_weights_file = 'inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5'
-    InceptionResNetV2_Models = tf.keras.applications.InceptionResNetV2(input_shape=(250, 250, 3), 
-                                                                include_top=False, 
-                                                                weights=None)
-    InceptionResNetV2_Models.load_weights(local_weights_file)
-    # pre_trained_model.summary()
+def create_model():
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(150,150,3)),
+        tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+        tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
+        tf.keras.layers.GlobalAveragePooling2D(),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(256, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(9, activation='softmax')
+    ])
 
-    for layer in InceptionResNetV2_Models.layers:
-        layer.trainable = False
-    last_layer = InceptionResNetV2_Models.get_layer('conv2d_199')
-    last_output = last_layer.output
-    x = tf.keras.layers.Flatten()(last_output)
-    x = tf.keras.layers.Dense(9, activation='softmax')(x)
-
-    model = tf.keras.Model(InceptionResNetV2_Models.input, x) 
-    model.summary()
-    
     model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 
-get_models()
 classification_labels = labels_classification_directory_txt()
 
 classification_training_dir, classification_validation_dir, classification_training_fish_paths, classification_validation_fish_paths = create_train_val_dir(root_path=root_path, classification_labels=classification_labels)
@@ -300,13 +289,12 @@ species_train_generators, species_val_generators = train_val_generator(classific
 
 lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
-model = build_model()
+model = create_model()
 initial_weights = model.get_weights()
 model.set_weights(initial_weights)
-
-history = model.fit(species_train_generators, epochs=120, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback])
+history = model.fit(species_train_generators, epochs=100, verbose=1, validation_data=species_val_generators)
 plot_training(history)
-model.save('SeaFest_SavedModels/SeaFest_Classification_SavedModels')
+model.save('SeaFest')
 sys.exit()
 
 
