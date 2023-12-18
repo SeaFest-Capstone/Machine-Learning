@@ -12,24 +12,25 @@ sys.setrecursionlimit(10000)
 root_path = ''
 source_path = os.path.join(root_path, 'Raw Data')
 freshness_data_source_path = os.path.join(source_path, 'Freshness')
-clean_dataset = False
-SPLIT_SIZE = 0.7
+clean_dataset = True
+SPLIT_SIZE = 0.8
 
 def create_train_val_dir(root_path):
     freshness_training_fish_paths = {}
     freshness_validation_fish_paths = {}
     datasets_dir = os.path.join(root_path, 'Datasets')
-    
-    if clean_dataset==True and os.path.exists(datasets_dir)==True :
-        shutil.rmtree(datasets_dir)
 
     freshness_dir = os.path.join(datasets_dir, 'Freshness')
+
+    if clean_dataset==True and os.path.exists(freshness_dir)==True :
+        shutil.rmtree(freshness_dir)
+
     freshness_training_dir = os.path.join(freshness_dir, 'training')
     freshness_validation_dir = os.path.join(freshness_dir, 'validation')
 
     freshness_fresh_training_dir = os.path.join(freshness_training_dir, 'fresh')
     freshness_fresh_validation_dir = os.path.join(freshness_validation_dir, 'fresh')
-    
+
     freshness_nonfresh_training_dir = os.path.join(freshness_training_dir, 'non fresh')
     freshness_nonfresh_validation_dir = os.path.join(freshness_validation_dir, 'non fresh')
 
@@ -38,7 +39,7 @@ def create_train_val_dir(root_path):
     freshness_validation_fish_paths['validation_fresh_dir'] = freshness_fresh_validation_dir
     freshness_validation_fish_paths['validation_nonfresh_dir'] = freshness_nonfresh_validation_dir
 
-    if os.path.exists(datasets_dir):
+    if clean_dataset == False:
         print("Directory already exist! using existing directory! SET 'clean_dataset=True' to remake the directories.")
         pass
     else:
@@ -119,29 +120,42 @@ def copy_split_shuffle_data(freshness_data_source_path, freshness_training_fish_
         print(f"An error occurred during file copying: {e}")
 
 def train_val_generator(train_dir, val_dir):
- 
+
     train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
-                                    rotation_range=40,
-                                    width_shift_range=50,
-                                    height_shift_range=50,
+                                    rotation_range=20,
+                                    width_shift_range=20,
+                                    height_shift_range=30,
                                     shear_range=0.2,
+                                    zoom_range=0.2,
+                                    brightness_range=(0.5, 1.5),
+                                    vertical_flip=True,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
-    
-    val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
-    
+
+
+    val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
+                                    rotation_range=20,
+                                    width_shift_range=20,
+                                    height_shift_range=30,
+                                    shear_range=0.2,
+                                    zoom_range=0.2,
+                                    brightness_range=(0.5, 1.5),
+                                    vertical_flip=True,
+                                    horizontal_flip=True,
+                                    fill_mode='nearest')
+
     train_generators = train_datagen.flow_from_directory(
         directory=train_dir,
-        target_size=(150,150),
-        batch_size=64,
+        target_size=(250,250),
+        batch_size=72,
         class_mode='binary',
     )
 
     val_generators= val_datagen.flow_from_directory(
         directory=val_dir,
-        batch_size=20,
+        batch_size=32,
         class_mode='binary',
-        target_size=(150, 150)
+        target_size=(250, 250)
     )
 
     return train_generators, val_generators
@@ -173,24 +187,28 @@ def plot_training(history):
 
 def create_model():
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(150,150,3)),
+        tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(250,250,3)),
         tf.keras.layers.MaxPooling2D(2,2),
-        tf.keras.layers.Conv2D(64, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
-        tf.keras.layers.MaxPooling2D(2,2),
-        tf.keras.layers.Conv2D(128, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.Conv2D(64, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001)),
         tf.keras.layers.MaxPooling2D(2,2),
         tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Conv2D(128, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001)),
+        tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.Conv2D(64, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001)),
+        tf.keras.layers.MaxPooling2D(2,2),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Conv2D(64, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001)),
+        tf.keras.layers.AveragePooling2D(pool_size=(2, 2), strides=(2, 2)),
+        tf.keras.layers.Conv2D(64, (3,3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001)),
+        tf.keras.layers.BatchNormalization(),
         tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
-        tf.keras.layers.GlobalAveragePooling2D(),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(32, activation='relu'),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dropout(0.3),
         tf.keras.layers.Dense(256, activation='relu'),
         tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dropout(0.2),
-        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(512, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
 
@@ -210,10 +228,10 @@ lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 model = create_model()
 initial_weights = model.get_weights()
 model.set_weights(initial_weights)
-history = model.fit(train_generators, epochs=300, verbose=1, validation_data=val_generators, callbacks=[lrs_callback])
+history = model.fit(train_generators, epochs=1, verbose=1, validation_data=val_generators, callbacks=[lrs_callback])
 plot_training(history)
 model.save('SeaFest Freshness')
-
+sys.exit()
 # check_files(classification_data_source_path) #optional
 # loaded_model = tf.keras.models.load_model('Capstone_test_1/saved_model.h5')
 

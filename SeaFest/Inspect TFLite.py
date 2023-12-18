@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 # Path to your TFLite model file
-tflite_model_path = "TFLite Models/Freshness.tflite"
+tflite_model_path = "TFLite Models/ClassificationModel.tflite"
 
 # Load the TFLite model
 interpreter = tf.lite.Interpreter(model_path=tflite_model_path)

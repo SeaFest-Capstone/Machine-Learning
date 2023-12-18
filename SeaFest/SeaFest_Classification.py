@@ -102,7 +102,7 @@ def create_train_val_dir(root_path, classification_labels):
     print(classification_training_fish_paths)
     print(classification_validation_fish_paths)
 
-    if os.path.exists(datasets_dir):
+    if clean_dataset == False and os.path.exists(classification_dir):
         print("Directory already exist! using existing directory! SET 'clean_dataset=True' to remake the directories.")
         pass
     else:
@@ -215,14 +215,26 @@ def copy_split_shuffle_data(source_dir,  classification_training_fish_paths, cla
 def train_val_generator(train_dir, val_dir):
  
     species_train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
-                                    rotation_range=40,
-                                    width_shift_range=50,
-                                    height_shift_range=50,
+                                    rotation_range=20,
+                                    width_shift_range=20,
+                                    height_shift_range=30,
                                     shear_range=0.2,
+                                    zoom_range=0.2,
+                                    brightness_range=(0.5, 1.5),
+                                    vertical_flip=True,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
     
-    species_val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
+    species_val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
+                                    rotation_range=20,
+                                    width_shift_range=20,
+                                    height_shift_range=30,
+                                    shear_range=0.2,
+                                    zoom_range=0.2,
+                                    brightness_range=(0.5, 1.5),
+                                    vertical_flip=True,
+                                    horizontal_flip=True,
+                                    fill_mode='nearest')
     
     species_train_generators = species_train_datagen.flow_from_directory(
         directory=train_dir,
@@ -271,13 +283,18 @@ def build_model():
                                                                 include_top=False, 
                                                                 weights=None)
     InceptionResNetV2_Models.load_weights(local_weights_file)
-    # pre_trained_model.summary()
+    InceptionResNetV2_Models.summary()
 
     for layer in InceptionResNetV2_Models.layers:
         layer.trainable = False
-    last_layer = InceptionResNetV2_Models.get_layer('conv2d_199')
+    last_layer = InceptionResNetV2_Models.get_layer('mixed_7a')
     last_output = last_layer.output
     x = tf.keras.layers.Flatten()(last_output)
+    x = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001))(x)
+    x = tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001))(x)
+    x = tf.keras.layers.Dropout(0.2)(x)
+    x = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001))(x)
+    x = tf.keras.layers.Dense(32, activation='relu')(x)
     x = tf.keras.layers.Dense(9, activation='softmax')(x)
 
     model = tf.keras.Model(InceptionResNetV2_Models.input, x) 
@@ -303,7 +320,7 @@ model = build_model()
 initial_weights = model.get_weights()
 model.set_weights(initial_weights)
 
-history = model.fit(species_train_generators, epochs=2, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback])
+history = model.fit(species_train_generators, epochs=130, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback])
 plot_training(history)
 model.save('SeaFest_SavedModels/SeaFest_Classification_SavedModels')
 sys.exit()
