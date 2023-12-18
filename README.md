@@ -19,14 +19,15 @@ We incorporated two types of datasets, namely Fish Freshness and Classification 
 1. [Visual Studio Code](https://code.visualstudio.com/) or [Google Colaboratory](https://colab.research.google.com/) or [Jupyter Notebook](https://test-jupyter.readthedocs.io/en/latest/install.html)
 2. [Python](https://www.python.org/downloads/) 3.8 or above
 3. Tensorflow 3.10 or above
-4. CUDA Deep Neural Network (cuDNN) (To Utilize GPU Compute Units) - Optional
+4. CUDA Deep Neural Network (To Utilize GPU Compute Units) - <i>Optional</i>
 
 <h2>Source Code:</h2>
  
 - [x] [SeaFest Classification Model](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/SeaFest_Classification.py)
 - [x] [SeaFest Freshness Model](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/SeaFest_Freshness.py)
 - [x] [Inspecting SavedModels](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/inspectModels.py)
+- [x] [Predict Using Saved Classification Models](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/ClassificationPredictTesting.py)
+- [x] [Predict Using Saved Freshness Models](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/FreshnessPredictTesting.py)
 - [x] [Convert to TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/Convert%20to%20TFLITE.py)
 - [x] [Inspect TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/Inspect%20TFLite.py)
-- [x] [Predict Using Saved Classification Models](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/ClassificationPredictTesting.py)
 - [x] [Add Metadata to TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/TFLite_Metadata.ipynb)
