@@ -16,5 +16,5 @@
 **/Seafest Freshness
 **/TFLite Models
 **/gitignore
-**/Backup
-**/old_models
+Backup/
+old_models/
