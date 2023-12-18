@@ -1,11 +1,4 @@
-# SeaFest Machine-Learning
-- old_models = previous version of SeaFest CNN
-- Backup = Archived Previous SeaFest Model's Source Code
-- SeaFest = On-going development of the newest SeaFest Model (Fish Classification & Freshness Detection)
-- .H5 model can't be uploaded because large file sizes
-
 <h1>SeaFest Machine-Learning Path<h1>
-
 <h2>Machine Learning:</h2>
 We incorporated two types of datasets, namely Fish Freshness and Classification datasets, sourced from multiple platforms including Kaggle and Roboflow. Additionally, we supplemented our collection by gathering additional data firsthand to ensure a comprehensive and diverse dataset for training and validating our machine learning models. We used 9 classes for Fish’s Classification (from 47 classes) with a total of 2.582 images and 2 classes for Fish’s Freshness with a total of 4.880 images. 
 
@@ -32,3 +25,9 @@ We incorporated two types of datasets, namely Fish Freshness and Classification 
  
 - [x] [SeaFest Classification Model]()
 - [x] [SeaFest Freshness Model]()
+
+# NB:
+- old_models = previous version of SeaFest CNN
+- Backup = Archived Previous SeaFest Model's Source Code
+- SeaFest = On-going development of the newest SeaFest Model (Fish Classification & Freshness Detection)
+- .H5 model can't be uploaded because large file sizes
