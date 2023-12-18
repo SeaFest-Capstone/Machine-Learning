@@ -1,12 +1,7 @@
-import os
-import zipfile
-import random
-import shutil
 import tensorflow as tf
 from shutil import copyfile
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
 
 image_path = "Datasets/Classification/training/Gurame/ikan_ikan_Gurame_0_jpg.rf.4cac66e65aa4404680f23b38ca426bce.jpg"
 
@@ -26,7 +21,7 @@ def PREDICT(model, image_path):
     output = infer(tf.constant(img_array))
 
     # Access the output layer's name 
-    output_layer_name = list(output.keys())[0]  # Assumes only one output layer in your model
+    output_layer_name = list(output.keys())[0]
 
     # Get the predicted class index
     predicted_class_index = np.argmax(output[output_layer_name][0])
