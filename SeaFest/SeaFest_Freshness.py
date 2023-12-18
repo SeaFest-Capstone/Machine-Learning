@@ -216,27 +216,31 @@ def create_model():
 
     return model
 
-freshness_training_dir, freshness_validation_dir, freshness_training_fish_paths, freshness_validation_fish_paths = create_train_val_dir(root_path=root_path)
+# freshness_training_dir, freshness_validation_dir, freshness_training_fish_paths, freshness_validation_fish_paths = create_train_val_dir(root_path=root_path)
 
-if clean_dataset== True:
-    copy_split_shuffle_data(freshness_data_source_path, freshness_training_fish_paths, freshness_validation_fish_paths, SPLIT_SIZE)
+# if clean_dataset== True:
+#     copy_split_shuffle_data(freshness_data_source_path, freshness_training_fish_paths, freshness_validation_fish_paths, SPLIT_SIZE)
 
-train_generators, val_generators = train_val_generator(freshness_training_dir, freshness_validation_dir) #generate data
+# train_generators, val_generators = train_val_generator(freshness_training_dir, freshness_validation_dir) #generate data
 
-lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+# lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
-model = create_model()
-initial_weights = model.get_weights()
-model.set_weights(initial_weights)
-history = model.fit(train_generators, epochs=1, verbose=1, validation_data=val_generators, callbacks=[lrs_callback])
-plot_training(history)
-model.save('SeaFest Freshness')
-sys.exit()
+# model = create_model()
+# initial_weights = model.get_weights()
+# model.set_weights(initial_weights)
+# history = model.fit(train_generators, epochs=1, verbose=1, validation_data=val_generators, callbacks=[lrs_callback])
+# plot_training(history)
+# model.save('SeaFest Freshness')
+
 # check_files(classification_data_source_path) #optional
 # loaded_model = tf.keras.models.load_model('Capstone_test_1/saved_model.h5')
 
+image_path = "Datasets/Freshness/validation/fresh/20200517_084015.jpg"
+image_path1 = "Datasets/Freshness/validation/non fresh/DSC00509.JPG"
+
+model = tf.keras.models.load_model('SeaFest_SavedModels/Freshness_2')
 def PREDICT(model, image_path):
-    img = tf.keras.preprocessing.image.load_img(image_path, target_size=(125,125))
+    img = tf.keras.preprocessing.image.load_img(image_path, target_size=(250,250))
     img_array = tf.keras.preprocessing.image.img_to_array(img)
     img_array = np.expand_dims(img_array, axis=0)
 
@@ -245,11 +249,13 @@ def PREDICT(model, image_path):
     prediction = model.predict(img_array)
     
     if prediction[0] < 0.5:
-        print("ikan termasuk dalam kategori segar")
+        print("ikan termasuk dalam kategori TIDAK segar")
 
     else:
-        print("ikan termasuk dalam kategori tidak segar")
+        print("ikan termasuk dalam kategori segar")
 
+PREDICT(model, image_path)
+PREDICT(model, image_path1)
 # image_path1 = 'PREDICT/1.jpg'
 # image_path2 = 'PREDICT/2.jpg'
 # image_path3 = 'PREDICT/3.jpg'

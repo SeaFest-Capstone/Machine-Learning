@@ -13,11 +13,12 @@ root_path = ''
 source_path = os.path.join(root_path, 'Raw Data')
 classification_data_source_path = os.path.join(source_path, 'Classification')
 clean_dataset = False
+model_name = "inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5"
 SPLIT_SIZE = 0.7
 
-def get_models():
+def get_models(model_name):
     url = "https://storage.googleapis.com/tensorflow/keras-applications/inception_resnet_v2/inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5"
-    output_path = "inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5"
+    output_path = model_name
 
 # Send an HTTP request to the URL and download the file
     response = requests.get(url)
