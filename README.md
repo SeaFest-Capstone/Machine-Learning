@@ -23,11 +23,10 @@ We incorporated two types of datasets, namely Fish Freshness and Classification 
 
 <h2>Source Code:</h2>
  
-- [x] [SeaFest Classification Model]()
-- [x] [SeaFest Freshness Model]()
-
-# NB:
-- old_models = previous version of SeaFest CNN
-- Backup = Archived Previous SeaFest Model's Source Code
-- SeaFest = On-going development of the newest SeaFest Model (Fish Classification & Freshness Detection)
-- SavedModels model can't be uploaded because large file sizes
+- [x] [SeaFest Classification Model](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/SeaFest_Classification.py)
+- [x] [SeaFest Freshness Model](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/SeaFest_Freshness.py)
+- [x] [Inspecting SavedModels](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/inspectModels.py)
+- [x] [Convert to TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/Convert%20to%20TFLITE.py)
+- [x] [Inspect TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/Inspect%20TFLite.py)
+- [x] [Predict Using Saved Classification Models](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/ClassificationPredictTesting.py)
+- [x] [Add Metadata to TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/TFLite_Metadata.ipynb)
