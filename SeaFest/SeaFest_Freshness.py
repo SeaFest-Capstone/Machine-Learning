@@ -120,11 +120,7 @@ def train_val_generator(train_dir, val_dir):
 
     val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
                                     rotation_range=20,
-                                    width_shift_range=20,
-                                    height_shift_range=30,
-                                    shear_range=0.2,
                                     zoom_range=0.2,
-                                    brightness_range=(0.5, 1.5),
                                     vertical_flip=True,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
@@ -132,7 +128,7 @@ def train_val_generator(train_dir, val_dir):
     train_generators = train_datagen.flow_from_directory(
                             directory=train_dir,
                             target_size=(250,250),
-                            batch_size=72,
+                            batch_size=64,
                             class_mode='binary',
                         )
 
@@ -214,8 +210,20 @@ if clean_dataset== True:
 # ImageDataGenerator to Prevent Overfitting
 train_generators, val_generators = train_val_generator(freshness_training_dir, freshness_validation_dir) #generate data
 
-# Initialize Learning Rate Scheduler
+# Initialize Callbacks
 lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+                    'SeaFest_SavedModels/FixSeaFestFreshness_BestModel.h5',
+                    save_best_only=True,
+                    monitor='val_loss',
+                    mode='min'
+                )
+
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="SeaFest_SavedModels/FixSeaFestFreshnessLogs",
+                                                        histogram_freq=1,
+                                                        write_graph=True,
+                                                        update_freq='epoch'
+                                                        )
 
 # Build the Model
 model = create_model()
@@ -225,10 +233,11 @@ initial_weights = model.get_weights()
 model.set_weights(initial_weights)
 
 # Train the Model
-history = model.fit(train_generators, epochs=80, verbose=1, validation_data=val_generators, callbacks=[lrs_callback])
+history = model.fit(train_generators, epochs=100, verbose=1, validation_data=val_generators, callbacks=[lrs_callback, tensorboard_callback, model_checkpoint])
 
 # Saving the Model
-model.save('SeaFest Freshness')
+model.save('SeaFest_SavedModels/FixSeaFestFreshness')
+model.save('SeaFest_SavedModels/FixSeaFestFreshness.h5')
 
 # Plotting Model Training Performance
 plot_training(history)

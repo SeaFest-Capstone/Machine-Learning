@@ -210,11 +210,7 @@ def train_val_generator(train_dir, val_dir):
     
     species_val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
                                     rotation_range=20,
-                                    width_shift_range=20,
-                                    height_shift_range=30,
-                                    shear_range=0.2,
                                     zoom_range=0.2,
-                                    brightness_range=(0.5, 1.5),
                                     vertical_flip=True,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
@@ -228,7 +224,7 @@ def train_val_generator(train_dir, val_dir):
 
     species_val_generators= species_val_datagen.flow_from_directory(
                                 directory=val_dir,
-                                batch_size=20,
+                                batch_size=32,
                                 class_mode='categorical',
                                 target_size=(250, 250)
                             )
@@ -263,19 +259,19 @@ def plot_training(history):
     plt.show()
 
 # Build the Model
-def build_model():
-    local_weights_file = 'inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5'
+def build_model(model_name):
+    local_weights_file = model_name
     InceptionResNetV2_Models = tf.keras.applications.InceptionResNetV2(input_shape=(250, 250, 3), 
                                                                         include_top=False, 
                                                                         weights=None)
     
     InceptionResNetV2_Models.load_weights(local_weights_file)
-    InceptionResNetV2_Models.summary()
+    # InceptionResNetV2_Models.summary()
 
     for layer in InceptionResNetV2_Models.layers:
         layer.trainable = False
 
-    last_layer = InceptionResNetV2_Models.get_layer('mixed_7a')
+    last_layer = InceptionResNetV2_Models.get_layer('block17_15_mixed')
     last_output = last_layer.output
 
     x = tf.keras.layers.Flatten()(last_output)
@@ -283,7 +279,7 @@ def build_model():
     x = tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001))(x)
     x = tf.keras.layers.Dropout(0.2)(x)
     x = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001))(x)
-    x = tf.keras.layers.Dense(32, activation='relu')(x)
+    x = tf.keras.layers.Dense(64, activation='relu')(x)
     x = tf.keras.layers.Dense(9, activation='softmax')(x)
 
     model = tf.keras.Model(InceptionResNetV2_Models.input, x) 
@@ -314,15 +310,22 @@ species_train_generators, species_val_generators = train_val_generator(classific
 
 # Initialize Learning Rate Scheduler
 lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+                    'SeaFest_SavedModels/FixSeaFestClassification_BestModel.h5',
+                    save_best_only=True,
+                    monitor='val_loss',
+                    mode='min'
+                )
 
 # Build the Model
-model = build_model()
+model = build_model(model_name)
 
 # Train the Model
-history = model.fit(species_train_generators, epochs=130, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback])
+history = model.fit(species_train_generators, epochs=100, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback, model_checkpoint])
 
 # Saving the Model
-model.save('SeaFest_SavedModels/SeaFest_Classification_SavedModels')
+model.save('SeaFest_SavedModels/FixSeaFestClassification')
+model.save('SeaFest_SavedModels/FixSeaFestClassification.h5')
 
 # Plotting Model Training Performance
 plot_training(history)
