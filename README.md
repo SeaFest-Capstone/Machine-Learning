@@ -5,9 +5,9 @@
 
 <h2>Machine Learning Members:</h2>
 
-Team ID		: CH2-PS436
-1.  M014BSY1866 – I Komang Cleon Kalea
-2.  M014BSY1717 – I Made Dwika Dyananda Kumara
+Team ID		: <b>CH2-PS436</b>
+1.  M014BSY1866 – <b>I Komang Cleon Kalea</b>
+2.  M014BSY1717 – <b>I Made Dwika Dyananda Kumara</b>
  
  <h2>Machine Learning:</h2>
 We incorporated two types of datasets, namely Fish Freshness and Classification datasets, sourced from multiple platforms including Kaggle and Roboflow. Additionally, we supplemented our collection by gathering additional data firsthand to ensure a comprehensive and diverse dataset for training and validating our machine learning models. We used 9 classes for Fish’s Classification (from 47 classes) with a total of 2.582 images and 2 classes for Fish’s Freshness with a total of 4.880 images. 
