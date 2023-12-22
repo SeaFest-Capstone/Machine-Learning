@@ -41,3 +41,4 @@ We incorporated two types of datasets, namely Fish Freshness and Classification 
 - [x] [Convert to TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/Convert%20to%20TFLITE.py)
 - [x] [Inspect TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/Inspect%20TFLite.py)
 - [x] [Add Metadata to TFLite](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/TFLite_Metadata.ipynb)
+- [x] [Test TFLite Inference in Python](https://github.com/SeaFest-Capstone/Machine-Learning/blob/master/SeaFest/PredictClassificationTFLite.py)
