@@ -12,22 +12,28 @@ root_path = ''
 source_path = os.path.join(root_path, 'Raw Data')
 classification_data_source_path = os.path.join(source_path, 'Classification')
 clean_dataset = True
-renew_model = True
-model_name = "inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5"
+renew_model = False
+model_name = "inceptionv3_weights_notop.h5"
 SPLIT_SIZE = 0.7
 
-# Download InceptionResNetV2 Models
+# Download InceptionV3 Models
 def get_models(model_name):
-    # URL to InceptionResNetV2 Model
-    url = "https://storage.googleapis.com/tensorflow/keras-applications/inception_resnet_v2/inception_resnet_v2_weights_tf_dim_ordering_tf_kernels_notop.h5"
+    # URL to InceptionV3 Model
+    url = "https://storage.googleapis.com/tensorflow/keras-applications/inception_v3/inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5"
     output_path = model_name
 
-    # HTTP Request to Download InceptionResNetV2 Model
+    # HTTP Request to Download InceptionV3 Model
     response = requests.get(url)
 
-    # Save InceptionResNetV2 Model
-    with open(output_path, 'wb') as f:
-        f.write(response.content)
+    # Save InceptionV3 Model
+    if response.status_code == 200:
+    # Save the downloaded weights to the specified output path
+        with open(output_path, 'wb') as f:
+            f.write(response.content)
+        print(f"InceptionV3 weights downloaded successfully and saved as {output_path}")
+    else:
+        print("Failed to download InceptionV3 weights. Check the URL or your internet connection.")
+
 
 # Get Data Labels
 def labels_classification_to_txt():
@@ -203,30 +209,28 @@ def train_val_generator(train_dir, val_dir):
                                     height_shift_range=30,
                                     shear_range=0.2,
                                     zoom_range=0.2,
-                                    brightness_range=(0.5, 1.5),
                                     vertical_flip=True,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
     
     species_val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
                                     rotation_range=20,
-                                    zoom_range=0.2,
                                     vertical_flip=True,
                                     horizontal_flip=True,
                                     fill_mode='nearest')
     
     species_train_generators = species_train_datagen.flow_from_directory(
                                 directory=train_dir,
-                                target_size=(250,250),
+                                target_size=(299,299),
                                 batch_size=64,
                                 class_mode='categorical'
                             )
 
     species_val_generators= species_val_datagen.flow_from_directory(
                                 directory=val_dir,
-                                batch_size=32,
+                                batch_size=42,
                                 class_mode='categorical',
-                                target_size=(250, 250)
+                                target_size=(299, 299)
                             )
 
     return species_train_generators, species_val_generators
@@ -261,17 +265,17 @@ def plot_training(history):
 # Build the Model
 def build_model(model_name):
     local_weights_file = model_name
-    InceptionResNetV2_Models = tf.keras.applications.InceptionResNetV2(input_shape=(250, 250, 3), 
+    InceptionV3_Models = tf.keras.applications.InceptionV3(input_shape=(299, 299, 3), 
                                                                         include_top=False, 
                                                                         weights=None)
     
-    InceptionResNetV2_Models.load_weights(local_weights_file)
-    # InceptionResNetV2_Models.summary()
+    InceptionV3_Models.load_weights(local_weights_file)
+    # InceptionV3_Models.summary()
 
-    for layer in InceptionResNetV2_Models.layers:
+    for layer in InceptionV3_Models.layers:
         layer.trainable = False
 
-    last_layer = InceptionResNetV2_Models.get_layer('block17_15_mixed')
+    last_layer = InceptionV3_Models.get_layer('mixed7')
     last_output = last_layer.output
 
     x = tf.keras.layers.Flatten()(last_output)
@@ -279,17 +283,19 @@ def build_model(model_name):
     x = tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001))(x)
     x = tf.keras.layers.Dropout(0.2)(x)
     x = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.0001))(x)
-    x = tf.keras.layers.Dense(64, activation='relu')(x)
+    x = tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l1(0.0001))(x)
+    x = tf.keras.layers.Dropout(0.3)(x)
+    x = tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l1(0.0001))(x)
     x = tf.keras.layers.Dense(9, activation='softmax')(x)
 
-    model = tf.keras.Model(InceptionResNetV2_Models.input, x) 
-    model.summary()
+    model = tf.keras.Model(InceptionV3_Models.input, x) 
+    # model.summary()
     
     model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 
-# Download InceptionResNetV2
+# Download InceptionV3
 if renew_model == True:
     get_models(model_name)
 else:
@@ -311,7 +317,7 @@ species_train_generators, species_val_generators = train_val_generator(classific
 # Initialize Learning Rate Scheduler
 lrs_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-                    'SeaFest_SavedModels/FixSeaFestClassification_BestModel.h5',
+                    'SeaFest_SavedModels/5. InceptionV3_SeaFestClassification_BestModel.h5',
                     save_best_only=True,
                     monitor='val_loss',
                     mode='min'
@@ -321,11 +327,11 @@ model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
 model = build_model(model_name)
 
 # Train the Model
-history = model.fit(species_train_generators, epochs=100, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback, model_checkpoint])
+history = model.fit(species_train_generators, epochs=30, verbose=1, validation_data=species_val_generators, callbacks=[lrs_callback, model_checkpoint])
 
 # Saving the Model
-model.save('SeaFest_SavedModels/FixSeaFestClassification')
-model.save('SeaFest_SavedModels/FixSeaFestClassification.h5')
+model.save('SeaFest_SavedModels/5. InceptionV3_SeaFestClassification')
+model.save('SeaFest_SavedModels/5. InceptionV3_SeaFestClassification.h5')
 
 # Plotting Model Training Performance
 plot_training(history)
